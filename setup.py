@@ -19,6 +19,7 @@ setup(name='Manifold',
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
+          "Genshi",
       ],
       entry_points = {
           'console_scripts': [
