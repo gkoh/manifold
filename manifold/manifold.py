@@ -10,7 +10,7 @@ __copyright__ = '(c) Chris Miles 2008. All rights reserved.'
 __license__ = 'GPL http://www.gnu.org/licenses/gpl.txt'
 __id__ = '$Id$'
 __url__ = '$URL$'
-__version__ = '0.1'
+__version__ = '0.1.1'
 
 
 # ---- Imports ----
@@ -61,8 +61,22 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
                 <method_credential py:if="method_credential_user and method_credential_group" user='${method_credential_user}' group='${method_credential_group}' />
             </method_context>
 
+            <exec_method
+                    type='method'
+                    name='start'
+                    exec='${exec_method_start}'
+                    timeout_seconds='60' />
+
+            <exec_method
+                    type='method'
+                    name='stop'
+                    exec='${exec_method_stop}'
+                    timeout_seconds='60' />
+
             <property_group name='startd' type='framework'>
-                <propval name='duration' type='astring' value='child' />
+                <propval py:if="startd_model=='wait'" name='duration' type='astring' value='child' />
+                <propval py:if="startd_model=='transient'" name='duration' type='astring' value='transient' />
+                <propval py:if="startd_model=='contract'" name='duration' type='astring' value='contract' />
                 <propval name='ignore_error' type='astring' value='core,signal' />
             </property_group>
 
@@ -91,7 +105,9 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
                 timeout_seconds='60' />
 
         <property_group name='startd' type='framework'>
-            <propval name='duration' type='astring' value='child' />
+            <propval py:if="startd_model=='wait'" name='duration' type='astring' value='child' />
+            <propval py:if="startd_model=='transient'" name='duration' type='astring' value='transient' />
+            <propval py:if="startd_model=='contract'" name='duration' type='astring' value='contract' />
             <propval name='ignore_error' type='astring' value='core,signal' />
         </property_group>
 
@@ -187,12 +203,13 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
 # ---- Classes ----
 
 class CONFIG_BASE(object):
-    def __init__(self, name, require_value=False, default=None, description=None, example=None):
+    def __init__(self, name, require_value=False, default=None, description=None, example=None, accepted_values=None):
         self.name = name
         self.require_value = require_value
         self.default = default
         self.description = description
         self.example = example
+        self.accepted_values = accepted_values
     
     def prompt(self):
         raise NotImplemented()
@@ -221,6 +238,9 @@ class CONFIG_STR(CONFIG_BASE):
             r = raw_input(self.prompt()).strip()
             if not r and self.default is not None:
                 r = self.default
+            elif self.accepted_values and r not in self.accepted_values:
+                print "Sorry, you must enter one of: " + ', '.join(['"%s"'%s for s in self.accepted_values])
+                r = None
         if not r:
             r = None
         return r
@@ -335,8 +355,9 @@ def generate_service_config():
         CONFIG_STR(
             'service_name',
             require_value=True,
-            description='The name of the service, which follows the service category',
-            example="'svc-name'"
+            description="""The name of the service, which follows the service category
+  """,
+            example="'myapp'"
         ),
         CONFIG_STR(
             'service_version',
@@ -348,7 +369,8 @@ def generate_service_config():
         CONFIG_STR(
             'common_name',
             require_value=False,
-            description="The human readable name of the service",
+            description="""The human readable name of the service
+  """,
             example="'My service.'"
         ),
         CONFIG_IF(
@@ -362,21 +384,40 @@ def generate_service_config():
         CONFIG_STR(
             'config_file',
             require_value=False,
-            description="Full path to a config file; leave blank if no config file required",
+            description="""Full path to a config file; leave blank if no config file
+  required""",
             example="'/etc/myservice.conf'"
         ),
         CONFIG_STR(
             'exec_method_start',
             require_value=True,
-            description="The full command to start the service; may contain '%{config_file}' to substitute the configuration file",
+            description="""The full command to start the service; may contain
+  '%{config_file}' to substitute the configuration file
+  """,
             example="'/usr/bin/myservice %{config_file}'"
         ),
         CONFIG_STR(
             'exec_method_stop',
             require_value=True,
             default = ':kill',
-            description="The full command to stop the service; may also specify ':kill' to let SMF kill the service processes automatically",
-            example="'/usr/bin/myservice_ctl stop' or ':kill' to let SMF kill the service processes automatically"
+            description="""The full command to stop the service; may specify ':kill' to let
+  SMF kill the service processes automatically
+  """,
+            example="""'/usr/bin/myservice_ctl stop' or ':kill' to let SMF kill
+  the service processes automatically"""
+        ),
+        CONFIG_STR(
+            'startd_model',
+            require_value=True,
+            default = 'wait',
+            description="""Choose a process management model:
+  'wait'      : long-running process that runs in the foreground (default)
+  'contract'  : long-running process that daemonizes or forks itself
+                (i.e. start command returns immediately)
+  'transient' : short-lived process, performs an action and ends quickly
+  """,
+            # example="",
+            accepted_values = ('wait', 'contract', 'transient'),
         ),
         CONFIG_BOOL(
             'depends_on_network',
@@ -391,13 +432,15 @@ def generate_service_config():
         CONFIG_STR(
             'method_credential_user',
             require_value=False,
-            description="The user to change to when executing the start/stop/refresh methods",
+            description="""The user to change to when executing the
+  start/stop/refresh methods""",
             example="'webservd'"
         ),
         CONFIG_STR(
             'method_credential_group',
             require_value=False,
-            description="The group to change to when executing the start/stop/refresh methods",
+            description="""The group to change to when executing the
+  start/stop/refresh methods""",
             example="'webservd'"
         ),
     ]
