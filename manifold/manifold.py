@@ -10,7 +10,7 @@ __copyright__ = '(c) Chris Miles 2008. All rights reserved.'
 __license__ = 'GPL http://www.gnu.org/licenses/gpl.txt'
 __id__ = '$Id$'
 __url__ = '$URL$'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 # ---- Imports ----
@@ -22,7 +22,6 @@ import optparse
 import sys
 
 # - Genshi Modules -
-# from genshi.template import TemplateLoader
 from genshi.template import MarkupTemplate
 
 
@@ -130,73 +129,6 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
 
 </service_bundle>
 """
-
-# MANIFEST_MULTI_INSTANCE_TEMPLATE = """<?xml version="1.0"?>
-# <!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
-# <!--
-#         Created by Manifold
-# -->
-# 
-# <service_bundle type='manifest' name='${service_name}' xmlns:py='http://genshi.edgewall.org/'>
-# 
-# <service
-#         name='${service_category}/${service_name}'
-#         type='service'
-#         version='${service_version}'>
-# 
-#     <instance name='${instance_name}' enabled='${instance_enabled}'>
-# 
-#         <dependency py:if="depends_on_network"
-#                 name='network'
-#                 grouping='require_all'
-#                 restart_on='error'
-#                 type='service'>
-#             <service_fmri value='svc:/milestone/network:default'/>
-#         </dependency>
-# 
-# 
-#         <exec_method
-#                 type='method'
-#                 name='start'
-#                 exec='${exec_method_start}'
-#                 timeout_seconds='60'>
-#         </exec_method>
-# 
-#         <exec_method
-#                 type='method'
-#                 name='stop'
-#                 exec='${exec_method_stop}'
-#                 timeout_seconds='60' />
-# 
-#         <method_context>
-#             <method_credential py:if="method_credential_user and method_credential_group" user='${method_credential_user}' group='${method_credential_group}' />
-#         </method_context>
-# 
-#         <property_group name='startd' type='framework'>
-#                 <propval name='duration' type='astring' value='child' />
-#                 <propval name='ignore_error' type='astring' value='core,signal' />
-#         </property_group>
-# 
-#         <property_group name='application' type='application'>
-#             <propval py:if="config_file" name='config_file' type='astring' value='${config_file}' />
-#         </property_group>
-# 
-#         <stability value='Evolving' />
-# 
-#         <template>
-#             <common_name>
-#                 <loctext xml:lang='C'>
-#                     ${common_name}
-#                 </loctext>
-#             </common_name>
-#         </template>
-# 
-#     </instance>
-# 
-# </service>
-# 
-# </service_bundle>
-# """
 
 
 
@@ -327,7 +259,6 @@ class CONFIG_IF(CONFIG_BASE):
         
         if r:
             # if answer to this question is "yes" then ask user extra questions
-            # import pdb; pdb.set_trace()
             config.update(ask_user(self.questions))
         return r
     
@@ -339,6 +270,7 @@ def ask_user(service_questions):
     response = {}
     
     for q in service_questions:
+        print
         response[q.name] = q.ask(response)
     return response
 
@@ -452,35 +384,8 @@ def generate_service_config():
 
 
 def create_manifest(outfp, service_config):
-    # loader = TemplateLoader(['.'])
-    # tmpl = loader.load('solidcactusdb2satchmoxml-template.xml', encoding='utf-8')
-    # xml = tmpl.generate(**tmpl_vars).render('xml')
-    
-    # if service_config['multi_instance']:
-    #     manifest_template = MANIFEST_MULTI_INSTANCE_TEMPLATE
-    # else:
-    #     manifest_template = MANIFEST_SINGLE_INSTANCE_TEMPLATE
-    
-    manifest_template = MANIFEST_TEMPLATE
-    
-    # tmpl_vars = dict(
-    #     depends_on_network = True,
-    #     common_name = 'FLVio web site.',
-    #     config_file = '/export/flvio/configs/flvio-website.cfg',
-    #     exec_method_start = '/usr/bin/start-flviowebsite.py %{config_file}',
-    #     exec_method_stop = ':kill',
-    #     instance_name = 'default',
-    #     instance_enabled = 'false',
-    #     method_credential_group = 'webservd',
-    #     method_credential_user = 'webservd',
-    #     service_category = 'site',
-    #     service_name = 'svc-name',
-    #     service_version = '1',
-    # )
-    
-    tmpl = MarkupTemplate(manifest_template)
+    tmpl = MarkupTemplate(MANIFEST_TEMPLATE)
     xml = tmpl.generate(**service_config).render('xml', strip_whitespace=False)
-    
     outfp.write(xml)
 
 
@@ -490,12 +395,11 @@ def main(argv=None):
         argv = sys.argv
     
     # define usage and version messages
-    usageMsg = "usage: %s [options] [output.xml]" % sys.argv[0]
+    usageMsg = "usage: %s [options] output.xml" % sys.argv[0]
     versionMsg = """%s %s""" % (os.path.basename(argv[0]), __version__)
     description = """Create an SMF service manifest file.  The resulting
 XML file can be validated and imported into SMF using the 'svccfg' command.
 For example, "svccfg validate myservice.xml", "svccfg -v import myservice.xml".
-If no output file is specified the output is written to stdout.
 """
 
     # get a parser object and define our options
@@ -509,14 +413,11 @@ If no output file is specified the output is written to stdout.
         action='store_true', default=False,
         help="debugging output (very verbose)")
     
-    # Options expecting values
-    # parser.add_option('-A', '--accept', dest='accept',
-    #     metavar="MEDIATYPES", default=None,
-    #     help="Specify HTTP Accept header value, the MEDIATYPES accepted by client.")
-    
     # Parse options & arguments
     (options, args) = parser.parse_args()
     
+    if len(args) < 1:
+        parser.error("Output file must be specified.")
     if len(args) > 1:
         parser.error("Only one output file can be specified.")
     
@@ -533,13 +434,8 @@ If no output file is specified the output is written to stdout.
         format='%(message)s',
     )
     
-    if len(args) == 1:
-        output_filename = args[0]
-        output = open(output_filename, 'w')
-        output_stdout = False
-    else:
-        output = sys.stdout
-        output_stdout = True
+    output_filename = args[0]
+    output = open(output_filename, 'w')
     
     service_config = generate_service_config()
     
@@ -547,10 +443,9 @@ If no output file is specified the output is written to stdout.
     
     output.close()
     
-    if not output_stdout:
-        print "\nManifest written to %s" %output_filename
-        print 'You can validate the XML file with "svccfg validate %s"' %output_filename
-        print 'And create the SMF service with "svccfg import %s"' %output_filename
+    print "\nManifest written to %s" %output_filename
+    print 'You can validate the XML file with "svccfg validate %s"' %output_filename
+    print 'And create the SMF service with "svccfg import %s"' %output_filename
     
     return 0
 
