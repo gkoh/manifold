@@ -10,7 +10,6 @@ __copyright__ = '(c) Chris Miles 2008. All rights reserved.'
 __license__ = 'GPL http://www.gnu.org/licenses/gpl.txt'
 __id__ = '$Id$'
 __url__ = '$URL$'
-__version__ = '0.1.2'
 
 
 # ---- Imports ----
@@ -23,6 +22,9 @@ import sys
 
 # - Genshi Modules -
 from genshi.template import MarkupTemplate
+
+# - Project Modules -
+from release import version
 
 
 # ---- Genshi Templates ----
@@ -396,7 +398,7 @@ def main(argv=None):
     
     # define usage and version messages
     usageMsg = "usage: %s [options] output.xml" % sys.argv[0]
-    versionMsg = """%s %s""" % (os.path.basename(argv[0]), __version__)
+    versionMsg = """%s %s""" % (os.path.basename(argv[0]), version)
     description = """Create an SMF service manifest file.  The resulting
 XML file can be validated and imported into SMF using the 'svccfg' command.
 For example, "svccfg validate myservice.xml", "svccfg -v import myservice.xml".

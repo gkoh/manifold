@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-from manifold.manifold import __version__ as version
+from manifold.release import version
 
 setup(name='Manifold',
       version=version,
