@@ -54,6 +54,14 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
             <service_fmri value='svc:/milestone/network:default'/>
         </dependency>
 
+        <dependency py:if="depends_on_filesystem"
+                name='filesystem'
+                grouping='require_all'
+                restart_on='error'
+                type='service'>
+            <service_fmri value='svc:/system/filesystem/local'/>
+        </dependency>
+
 
         <instance py:if="multi_instance" name='${instance_name}' enabled='${instance_enabled}'>
             <!--! This part used for a multi instance service. -->
@@ -356,6 +364,11 @@ def generate_service_config():
         CONFIG_BOOL(
             'depends_on_network',
             description="Does this service depend on the network being ready",
+            default=True
+        ),
+        CONFIG_BOOL(
+            'depends_on_filesystem',
+            description="Does this service depend on the local filesystems being ready",
             default=True
         ),
         CONFIG_BOOL(
