@@ -177,11 +177,11 @@ class CONFIG_STR(CONFIG_BASE):
     def ask(self, config):
         r = None
         while r is None or (self.require_value and not r):
-            r = raw_input(self.prompt()).strip()
+            r = input(self.prompt()).strip()
             if not r and self.default is not None:
                 r = self.default
             elif self.accepted_values and r not in self.accepted_values:
-                print "Sorry, you must enter one of: " + ', '.join(['"%s"'%s for s in self.accepted_values])
+                print("Sorry, you must enter one of: " + ', '.join(['"{}"'.format(s) for s in self.accepted_values]))
                 r = None
         if not r:
             r = None
@@ -214,7 +214,7 @@ class CONFIG_BOOL(CONFIG_BASE):
         )
         r = None
         while not r in answers.keys() and r != '':
-            r = raw_input(self.prompt()).strip().lower()
+            r = input(self.prompt()).strip().lower()
         
         if r:
             r = answers[r]
@@ -260,7 +260,7 @@ class CONFIG_IF(CONFIG_BASE):
         )
         r = None
         while not r in answers.keys() and r != '':
-            r = raw_input(self.prompt()).strip().lower()
+            r = input(self.prompt()).strip().lower()
         
         if r:
             r = answers[r]
@@ -458,9 +458,9 @@ For example, "svccfg validate myservice.xml", "svccfg -v import myservice.xml".
     
     output.close()
     
-    print "\nManifest written to %s" %output_filename
-    print 'You can validate the XML file with "svccfg validate %s"' %output_filename
-    print 'And create the SMF service with "svccfg import %s"' %output_filename
+    print("\nManifest written to {}".format(output_filename))
+    print('You can validate the XML file with "svccfg validate {}"'.format(output_filename))
+    print('And create the SMF service with "svccfg import {}"'.format(output_filename))
     
     return 0
 
