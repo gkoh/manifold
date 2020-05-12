@@ -43,7 +43,7 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
             version='${service_version}'>
 
         <create_default_instance py:if="not multi_instance" enabled='${instance_enabled}' />
-        
+
         <single_instance py:if="not multi_instance" />
 
         <dependency py:if="depends_on_network"
@@ -94,7 +94,7 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
             </property_group>
 
         </instance>
-        
+
         <a_single_instance py:if="not multi_instance" py:strip="True">
         <!--! This part used for a single instance only service. -->
         <method_context>
@@ -124,7 +124,7 @@ MANIFEST_TEMPLATE = """<?xml version="1.0"?>
             <propval py:if="config_file" name='config_file' type='astring' value='${config_file}' />
         </property_group>
         </a_single_instance>
-        
+
         <stability value='Evolving' />
 
         <template>
